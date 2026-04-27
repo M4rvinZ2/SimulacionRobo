@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Simulador Robot 3D</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        overflow: hidden;
+        font-family: system-ui, -apple-system, sans-serif;
+        background: #0a0a0f;
+      }
+      #canvas-container {
+        width: 100vw;
+        height: 100vh;
+        position: relative;
+      }
+      canvas {
+        display: block;
+      }
+      #info-panel {
+        position: absolute;
+        top: 20px;
+        left: 20px;
+        background: rgba(10, 10, 15, 0.9);
+        border: 1px solid rgba(100, 200, 255, 0.3);
+        border-radius: 8px;
+        padding: 16px;
+        color: #e0e0e0;
+        min-width: 220px;
+        backdrop-filter: blur(10px);
+      }
+      #info-panel h2 {
+        font-size: 14px;
+        color: #64c8ff;
+        margin-bottom: 12px;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+      }
+      .coord {
+        display: flex;
+        justify-content: space-between;
+        margin: 6px 0;
+        font-family: 'Courier New', monospace;
+        font-size: 13px;
+      }
+      .coord-label {
+        color: #888;
+      }
+      .coord-value {
+        color: #4fc3f7;
+        font-weight: bold;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="canvas-container">
+      <div id="info-panel">
+        <h2>Efector Final</h2>
+        <div class="coord">
+          <span class="coord-label">X:</span>
+          <span class="coord-value" id="pos-x">0.00</span>
+        </div>
+        <div class="coord">
+          <span class="coord-label">Y:</span>
+          <span class="coord-value" id="pos-y">0.00</span>
+        </div>
+        <div class="coord">
+          <span class="coord-label">Z:</span>
+          <span class="coord-value" id="pos-z">0.00</span>
+        </div>
+      </div>
+    </div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

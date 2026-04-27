@@ -1,0 +1,352 @@
+================================================================================
+                    DOCUMENTACIÓN DEL SIMULADOR DE ROBOT 3D
+================================================================================
+
+PROYECTO: Simulador de Robot 3D Articulado
+FECHA: Abril 2026
+AUTOR: (A completar)
+UBICACIÓN: C:\Users\marvi_c12j53m\robot-sim\
+
+================================================================================
+                             1. INFORMACIÓN GENERAL
+================================================================================
+
+El presente proyecto consiste en un simulador gráfico de un robot manipulador
+articulado de 3 grados de libertad, desarrollado en JavaScript utilizando
+la librería Three.js para renderizado 3D y lil-gui para la interfaz de control.
+
+El sistema permite:
+- Visualización en tiempo real del robot manipulador
+- Control de las 3 articulaciones mediante valores numéricos
+- Validación automática de los rangos de movimiento
+- Cálculo y display de la posición cartesiana del efector final
+- Referencia espacial con caja y etiquetas de ejes
+
+================================================================================
+                             2. ESTRUCTURA DE ARCHIVOS
+================================================================================
+
+Carpeta principal: C:\Users\marvi_c12j53m\robot-sim\
+
+ARCHIVOS DEL PROYECTO (entregables):
+├── src/main.js         (Código fuente principal - 275 líneas)
+├── index.html          (Archivo HTML de la interfaz)
+└── package.json        (Configuración del proyecto)
+
+DEPENDENCIAS (se instalan con npm install):
+├── three/              (Librería Three.js para gráficos 3D)
+├── lil-gui/            (Interfaz gráfica de control)
+├── vite/               (Servidor de desarrollo)
+└── [otros]            (Dependencias internas)
+
+================================================================================
+                       3. ESPECIFICACIONES DEL ROBOT
+================================================================================
+
+PARÁMETROS FÍSICOS:
++------------------+------------+
+| Componente       | Valor (cm) |
++------------------+------------+
+| Altura Base      |      5     |
+| Brazo 1 (J1)    |     10     |
+| Brazo 2 (J2)    |      7     |
+| Brazo 3 (J3)    |     20*    |
+| Pinza            |      8     |
++------------------+------------+
+| ALTURA TOTAL (Home) |     50     |
++------------------+------------+
+
+NOTA: El Brazo 3 es variable (0-30 cm), por lo que la altura total varía
+      entre 43 cm y 73 cm según la configuración.
+      *Valor inicial en home position.
+
+CONFIGURACIÓN INICIAL (Home):
+- q1 (Articulación Base):   0°
+- q2 (Articulación Hombro): 0°
+- q3 (Articulación Codo):   20 cm
+
+================================================================================
+                       4. VARIABLES PRINCIPALES
+================================================================================
+
+Constantes del robot (líneas 6-9 del código):
+-----------------------------------------
+const ALTURA_BASE = 5;
+const LONGITUD_BRAZO1 = 10;
+const LONGITUD_BRAZO2 = 15;
+const LONGITUD_BRAZO3_INICIAL = 20;
+
+Variables de la escena (líneas 11-33):
+--------------------------------------
+const ESCENA = new THREE.Scene();        // Escena Three.js
+const CAMARA = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+const RENDERIZADOR = new THREE.WebGLRenderer({ antialias: true });
+const CONTROL_CAMARA = new OrbitControls(CAMARA, RENDERIZADOR.domElement);
+
+Objetos del robot (líneas 140-196):
+----------------------------------
+const materialBase = crearMaterial(0x1a1a1a);          // Negro (Base圆柱)
+const materialArticulacion = crearMaterial(0x808080);    // Gris (Articulaciones球体)
+const materialBrazo = crearMaterial(0xcccccc);           // Gris claro (Brazos)
+const materialPinza = crearMaterial(0xff8c00);           // Naranja (Pinza)
+
+Constante de control de articulaciones:
+----------------------------------------
+const articular = {
+  uno: { angulo: 0, nombre: 'q1 (Base) [°]' },
+  dos: { angulo: 0, nombre: 'q2 (Hombro) [°]' },
+  tres: { longitud: 20, nombre: 'q3 (Codo) [cm]' }
+};
+
+================================================================================
+                       5. ARQUITECTURA JERÁRQUICA DEL ROBOT
+================================================================================
+
+La estructura del robot se organiza jerárquicamente así:
+
+ESCENA (raíz)
+└── MALLA_BASE (CylinderGeometry - Base圆柱)
+└── GRUPO_ARTICULACION_1 (Group)
+    ├── MALLA_ARTICULACION_1 (SphereGeometry - Esfera)
+    ├── MALLA_BRAZO1 (CylinderGeometry - Brazo 1)
+    └── GRUPO_ARTICULACION_2 (Group)
+        ├── MALLA_ARTICULACION_2 (SphereGeometry - Esfera)
+        ├── MALLA_BRAZO2 (CylinderGeometry - Brazo 2)
+        └── GRUPO_ARTICULACION_3 (Group)
+            ├── MALLA_ARTICULACION_3 (SphereGeometry - Esfera)
+            ├── MALLA_BRAZO3 (CylinderGeometry escalable - Brazo 3)
+            └── GRUPO_PINZA (Group - Pinza)
+                ├── BASE_PINZA (CylinderGeometry)
+                ├── DEDO1 (BoxGeometry)
+                ├── DEDO2 (BoxGeometry)
+                ├── PUNTA_DEDO1 (BoxGeometry)
+                └── PUNTA_DEDO2 (BoxGeometry)
+
+================================================================================
+                             6. FUNCIONES DEL CÓDIGO
+================================================================================
+
+crearEtiquetaHTML(texto, color, tamanoFuente)
+---------------------------------------------
+Crea elementos DOM estilizados para mostrar etiquetas en la escena 3D.
+Parámetros: texto a mostrar, color CSS, tamaño de fuente.
+Retorna: elemento <div> estilizado.
+
+crearParedesCaja()
+-----------------
+Genera la caja de referencia espacial con paredes de cuadrícula.
+- Tamaño de caja: 50x50 cm
+- Altura de paredes: 60 cm
+- Espaciado de líneas: cada 10 cm
+- Color de líneas: gris claro (0xcccccc)
+
+crearEtiquetas()
+--------------
+Agrega etiquetas de referencia:
+- Ejes X y Z: valores de -50 a +50 cada 10 cm
+- Eje Y: valores de 10 cm a 60 cm cada 10 cm
+- Labels de ejes: +X/-X (rojo), +Z/-Z (verde), +Y (azul)
+
+crearMaterial(color)
+-------------------
+Crea materiales Three.js con propiedades estándar.
+Parámetro: color hexadecimal.
+Retorna: MeshStandardMaterial con roughness: 0.3, metalness: 0.7.
+
+validarYActualizar()
+------------------
+Función principal de validación y actualización:
+1. Verifica que q1 esté en rango [-45°, 225°]
+2. Verifica que q2 esté en rango [0°, 125°]
+3. Verifica que q3 esté en rango [0 cm, 30 cm]
+4. Si hay error, muestra ventana de advertencia y revierte valores
+5. Si es válido, aplica rotaciones y actualización
+
+actualizarPosicionEfector()
+-------------------------
+Calcula la posición cartesiana del efector usando la matriz de cinemática directa ⁰T₃:
+
+Paso 1: Calcular pose del marco 3 (⁰T₃):
+- Rotación R = Rz(q1) * Ry(q2)
+- Traslación t_frame3 = [q3*cos(q1)*sin(q2), q3*sin(q1)*sin(q2), q3*cos(q2) + L1]
+  (L1 = LONGITUD_BRAZO1 = 10 cm)
+
+Paso 2: Sumar marco 3 → efector final (LONGITUD_BRAZO2 + pinza = 7+8=15 cm)
+  a lo largo del eje Z de R (tercera columna)
+
+Paso 3: Adaptar a Three.js (Y vertical):
+- Three.js X = t_frame3.y + 15*sin(q1)*sin(q2)
+- Three.js Z = t_frame3.x + 15*cos(q1)*sin(q2)
+- Three.js Y = t_frame3.z + ALTURA_BASE + 15*cos(q2)
+
+Ejemplos de cálculo:
+- Home (q1=0°, q2=0°, q3=20): (0, 50, 0) cm
+- q1=0°, q2=90°, q3=0: (0, 15, 15) cm
+
+================================================================================
+                         7. CONTROL DEL ROBOT
+================================================================================
+
+INTERFAZ DE CONTROL (lil-gui):
+- Panel lateral derecho titled "Control del Robot"
+- Tres campos numéricos editables:
+  * q1 (Base) [°]: Ángulo de rotación base (-45° a 225°)
+  * q2 (Hombro) [°]: Ángulo del hombro (0° a 125°)
+  * q3 (Codo) [cm]: Longitud del brazo 3 (0 cm a 30 cm)
+
+RESTRICCIONES:
++------------+------------------+-------------------+
+| Variable | Mínimo           | Máximo            |
++---------+------------------+-------------------+
+|   q1    |    -45°         |     225°         |
+|   q2    |      0°         |     125°         |
+|   q3    |    0 cm         |      30 cm       |
++---------+------------------+-------------------+
+
+Comportamiento:
+- Al presionar ENTER se validan y aplican los valores
+- Si un valor está fuera de rango, se muestra ventana de advertencia
+- El robot revierte al estado anterior si hay error
+
+================================================================================
+                      8. VISUALIZACIÓN Y REFERENCIA ESPACIAL
+================================================================================
+
+ESCENA:
+- Fondo blanco (0xffffff)
+- Caja de referencia de 50x50x60 cm
+- Piso semitransparente (20% opacidad)
+- Cuadrícula en el suelo
+
+ETIQUETAS:
+- Eje X positivo: "+X" (color rojo #cc0000)
+- Eje X negativo: "-X" (color rojo #cc0000)
+- Eje Z positivo: "+Z" (color verde #00cc00)
+- Eje Z negativo: "-Z" (color verde #00cc00)
+- Eje Y positivo: "+Y" (color azul #0000cc)
+
+COLORES DEL ROBOT:
+- Base: Negro (0x1a1a1a)
+- Articulaciones: Gris (0x808080)
+- Brazos: Gris claro (0xcccccc)
+- Pinza: Naranja (0xff8c00)
+
+================================================================================
+                          9. INTERFAZ DE USUARIO
+================================================================================
+
+PANEL DE COORDENADAS (esquina superior izquierda):
++------------------------+
+|   EFECTOR FINAL       |
++------------------------+
+| X:   [valor]          |
+| Y:   [valor]          |
+| Z:   [valor]          |
++------------------------+
+
+Valores muestran la posición cartesiana del efector en cm.
+
+PANTALLA DE ADVERTENCIA:
++---------------------------------------------------+
+|  ⚠️ VALOR FUERA DE RANGO                          |
+|                                                   |
+|  [mensaje con el rango válido]                    |
++---------------------------------------------------+
+
+================================================================================
+                           10. INSTALACIÓN Y EJECUCIÓN
+================================================================================
+
+REQUISITOS:
+- Node.js instalado
+- npm instalado
+
+INSTALACIÓN:
+------------
+1. Abrir terminal en la carpeta del proyecto
+2. Ejecutar: npm install
+3. Esperar descarga de dependencias
+
+EJECUCIÓN EN MODO DESARROLLO:
+----------------------------
+1. Ejecutar: npm run dev
+2. Abrir navegador en http://localhost:5173
+3. La página se actualiza automáticamente con cambios
+
+COMPILACIÓN PARA PRODUCCIÓN:
+---------------------------
+1. Ejecutar: npm run build
+2. Los archivos compilados están en /dist
+
+================================================================================
+                          11. LIBRERÍAS UTILIZADAS
+================================================================================
+
+| Librería   | Versión  | Función                              |
+|------------|----------|--------------------------------------|
+| three     | (del npm)| Gráficos 3D WebGL                   |
+| lil-gui   | (del npm)| Interfaz de usuario                  |
+| vite      | (del npm)| Servidor de desarrollo              |
+| OrbitControls| (del three) | Control de cámara del usuario |
+
+================================================================================
+                           12. ECUACIONES
+================================================================================
+
+ MATRIZ DE CINEMÁTICA DIRECTA ⁰T₃ (PROPORCIONADA POR EL PROFESOR):
+
+ [ cos(q1)cos(q2)  -sin(q1)  cos(q1)sin(q2)  q3*cos(q1)*sin(q2) ]
+ [ sin(q1)cos(q2)   cos(q1)  sin(q1)sin(q2)  q3*sin(q1)*sin(q2) ]
+ [ -sin(q2)          0        cos(q2)          q3*cos(q2) + L1   ]
+ [ 0                 0        0                 1                  ]
+
+ Donde:
+ - q1 = ángulo de articulación 1 (base) en radianes
+ - q2 = ángulo de articulación 2 (hombro) en radianes
+ - q3 = longitud de articulación 3 (prismática) en cm
+ - L1 = LONGITUD_BRAZO1 = 10 cm
+
+ CÁLCULO DE POSICIÓN DEL EFECTOR FINAL (Three.js):
+ Pose del marco 3 (traslación de ⁰T₃):
+   t₃_x = q3 * cos(q1) * sin(q2)
+   t₃_y = q3 * sin(q1) * sin(q2)
+   t₃_z = q3 * cos(q2) + L1
+
+ Efector final = marco 3 + (LONGITUD_BRAZO2 + Lpinza) * eje_Z_de_R
+   Donde eje_Z_de_R = [cos(q1)sin(q2), sin(q1)sin(q2), cos(q2)]
+   LONGITUD_BRAZO2 = 7 cm, Lpinza = 8 cm → total = 15 cm
+
+ Mapeo a Three.js (Y vertical):
+   X_three = t₃_y + 15 * sin(q1) * sin(q2)
+   Z_three = t₃_x + 15 * cos(q1) * sin(q2)
+   Y_three = t₃_z + ALTURA_BASE(5) + 15 * cos(q2)
+
+ VALORES CARACTERÍSTICOS:
+ - Home (q1=0°, q2=0°, q3=20):
+   X = 0 cm, Y = 5 + 10 + 20*1 + 15*1 = 50 cm, Z = 0 cm
+
+ - Extendido (q1=0°, q2=90°, q3=0):
+   X = 0 cm, Y = 5 + 10 + 0 + 15*0 = 15 cm, Z = 0 + 15*1 = 15 cm
+
+================================================================================
+                              13. NOTAS
+================================================================================
+
+1. El código está escrito en español para facilitar el mantenimiento.
+
+2. Los valores de las coordenadas del efector se calculan usando
+   trigonometría y no la posición real del objeto 3D para mayor precisión.
+
+3. La versión de Three.js se maneja automáticamente mediante package.json.
+
+4. Para modificar las longitudes de los brazos, изменense las constantes:
+   - ALTURA_BASE (línea 6)
+   - LONGITUD_BRAZO1 (línea 7)
+   - LONGITUD_BRAZO2 (línea 8)
+
+5. Para modificar los colores, cambiense los valores hexadecimales en
+   las funciones crearMaterial() (líneas 127-130).
+
+================================================================================
+                            FIN DEL DOCUMENTO
+================================================================================
