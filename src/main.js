@@ -202,7 +202,7 @@ const articular = {
 const estadoGuardado = { uno: 0, dos: 0, tres: 20 };
 const gui = new GUI({ title: 'Control del Robot' });
 
-function mostrarAdvertencia(mensaje) { alert('⚠️ VALOR FUERA DE RANGO\n\n' + mensaje); }
+function mostrarAdvertencia(mensaje) { alert('VALOR FUERA DE RANGO\n\n' + mensaje); }
 let actualizando = false;
 
 function validarYActualizar() {
@@ -306,17 +306,17 @@ function evaluarPolinomio(coef, t) {
 function validarRangoTrayectoria() {
   if (trayectoria.q1_inicial < -45 || trayectoria.q1_inicial > 225 ||
       trayectoria.q1_final < -45 || trayectoria.q1_final > 225) {
-    alert('⚠️ VALOR FUERA DE RANGO\n\nq1: -45° a 225°');
+    alert('VALOR FUERA DE RANGO\n\nq1: -45° a 225°');
     return false;
   }
   if (trayectoria.q2_inicial < 0 || trayectoria.q2_inicial > 125 ||
       trayectoria.q2_final < 0 || trayectoria.q2_final > 125) {
-    alert('⚠️ VALOR FUERA DE RANGO\n\nq2: 0° a 125°');
+    alert('VALOR FUERA DE RANGO\n\nq2: 0° a 125°');
     return false;
   }
   if (trayectoria.q3_inicial < 0 || trayectoria.q3_inicial > 30 ||
       trayectoria.q3_final < 0 || trayectoria.q3_final > 30) {
-    alert('⚠️ VALOR FUERA DE RANGO\n\nq3: 0 a 30 cm');
+    alert('VALOR FUERA DE RANGO\n\nq3: 0 a 30 cm');
     return false;
   }
   return true;
@@ -355,8 +355,8 @@ carpetaTrayectoria.add(trayectoria, 'q2_inicial').name('q2 inicial [°]').onFini
 carpetaTrayectoria.add(trayectoria, 'q2_final').name('q2 final [°]').onFinishChange(validarRangoTrayectoria);
 carpetaTrayectoria.add(trayectoria, 'q3_inicial').name('q3 inicial [cm]').onFinishChange(validarRangoTrayectoria);
 carpetaTrayectoria.add(trayectoria, 'q3_final').name('q3 final [cm]').onFinishChange(validarRangoTrayectoria);
-carpetaTrayectoria.add({ iniciar: iniciarTrayectoria }, 'iniciar').name('▶ Iniciar');
-carpetaTrayectoria.add({ resetear: resetearTrayectoria }, 'resetear').name('↺ Resetear');
+carpetaTrayectoria.add({ iniciar: iniciarTrayectoria }, 'iniciar').name('Iniciar');
+carpetaTrayectoria.add({ resetear: resetearTrayectoria }, 'resetear').name('Resetear');
 
 validarYActualizar();
 
