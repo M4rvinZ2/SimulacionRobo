@@ -202,7 +202,7 @@ const articular = {
 const estadoGuardado = { uno: 0, dos: 0, tres: 20 };
 const gui = new GUI({ title: 'Control del Robot' });
 
-function mostrarAdvertencia(mensaje) { alert('VALOR FUERA DEL RANGO\n\n' + mensaje); }
+function mostrarAdvertencia(mensaje) { alert('⚠️ VALOR FUERA DE RANGO\n\n' + mensaje); }
 let actualizando = false;
 
 function validarYActualizar() {
@@ -303,7 +303,28 @@ function evaluarPolinomio(coef, t) {
   return coef[0] + coef[1]*t + coef[2]*t*t + coef[3]*t*t*t + coef[4]*t*t*t*t + coef[5]*t*t*t*t*t;
 }
 
+function validarRangoTrayectoria() {
+  if (trayectoria.q1_inicial < -45 || trayectoria.q1_inicial > 225 ||
+      trayectoria.q1_final < -45 || trayectoria.q1_final > 225) {
+    alert('⚠️ VALOR FUERA DE RANGO\n\nq1: -45° a 225°');
+    return false;
+  }
+  if (trayectoria.q2_inicial < 0 || trayectoria.q2_inicial > 125 ||
+      trayectoria.q2_final < 0 || trayectoria.q2_final > 125) {
+    alert('⚠️ VALOR FUERA DE RANGO\n\nq2: 0° a 125°');
+    return false;
+  }
+  if (trayectoria.q3_inicial < 0 || trayectoria.q3_inicial > 30 ||
+      trayectoria.q3_final < 0 || trayectoria.q3_final > 30) {
+    alert('⚠️ VALOR FUERA DE RANGO\n\nq3: 0 a 30 cm');
+    return false;
+  }
+  return true;
+}
+
 function iniciarTrayectoria() {
+  if (!validarRangoTrayectoria()) return;
+  
   trayectoria.tiempoInicio = performance.now();
   coeficientes.q1 = calcularCoeficientesQuintico(
     trayectoria.q1_inicial, trayectoria.q1_final, 0, trayectoria.duracion
@@ -326,16 +347,16 @@ function resetearTrayectoria() {
   validarYActualizar();
 }
 
-const carpetaTrayectoria = gui.addFolder('Trayectoria con el polinomio');
-carpetaTrayectoria.add(trayectoria, 'duracion', 1, 10, 0.5).name('Duración [s]');
-carpetaTrayectoria.add(trayectoria, 'q1_inicial', -45, 225, 1).name('q1 inicial [°]');
-carpetaTrayectoria.add(trayectoria, 'q1_final', -45, 225, 1).name('q1 final [°]');
-carpetaTrayectoria.add(trayectoria, 'q2_inicial', 0, 125, 1).name('q2 inicial [°]');
-carpetaTrayectoria.add(trayectoria, 'q2_final', 0, 125, 1).name('q2 final [°]');
-carpetaTrayectoria.add(trayectoria, 'q3_inicial', 0, 30, 1).name('q3 inicial [cm]');
-carpetaTrayectoria.add(trayectoria, 'q3_final', 0, 30, 1).name('q3 final [cm]');
-carpetaTrayectoria.add({ iniciar: iniciarTrayectoria }, 'iniciar').name('Iniciar');
-carpetaTrayectoria.add({ resetear: resetearTrayectoria }, 'resetear').name('Restablecer');
+const carpetaTrayectoria = gui.addFolder('Trayectoria (Polinomio 5° orden)');
+carpetaTrayectoria.add(trayectoria, 'duracion').name('Duración [s]').onFinishChange(validarRangoTrayectoria);
+carpetaTrayectoria.add(trayectoria, 'q1_inicial').name('q1 inicial [°]').onFinishChange(validarRangoTrayectoria);
+carpetaTrayectoria.add(trayectoria, 'q1_final').name('q1 final [°]').onFinishChange(validarRangoTrayectoria);
+carpetaTrayectoria.add(trayectoria, 'q2_inicial').name('q2 inicial [°]').onFinishChange(validarRangoTrayectoria);
+carpetaTrayectoria.add(trayectoria, 'q2_final').name('q2 final [°]').onFinishChange(validarRangoTrayectoria);
+carpetaTrayectoria.add(trayectoria, 'q3_inicial').name('q3 inicial [cm]').onFinishChange(validarRangoTrayectoria);
+carpetaTrayectoria.add(trayectoria, 'q3_final').name('q3 final [cm]').onFinishChange(validarRangoTrayectoria);
+carpetaTrayectoria.add({ iniciar: iniciarTrayectoria }, 'iniciar').name('▶ Iniciar');
+carpetaTrayectoria.add({ resetear: resetearTrayectoria }, 'resetear').name('↺ Resetear');
 
 validarYActualizar();
 
