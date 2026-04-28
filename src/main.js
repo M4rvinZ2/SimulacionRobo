@@ -245,22 +245,22 @@ function actualizarPosicionEfector() {
   const c1 = Math.cos(q1), s1 = Math.sin(q1);
   const c2 = Math.cos(q2), s2 = Math.sin(q2);
   
-  // Matriz ⁰T₃ del profesor
-  const q3_prof = LONGITUD_BRAZO2 + q3; // q3 profesor = brazo2 + brazo3
-  const L1 = LONGITUD_BRAZO1; // 10 cm
+
+  const q3_prof = LONGITUD_BRAZO2 + q3;
+  const L1 = LONGITUD_BRAZO1;
   
-  // Posición marco3 (según matriz profesor)
+
   const marco3_x = q3_prof * c1 * s2;
   const marco3_y = q3_prof * s1 * s2;
   const marco3_z = q3_prof * c2 + L1;
   
-  // Sumar pinza (8 cm) en eje Z de rotación
+
   const pinza = 8;
   const total_x = marco3_x + pinza * c1 * s2;
   const total_y = marco3_y + pinza * s1 * s2;
   const total_z = marco3_z + pinza * c2;
   
-  // Mapear a Three.js (Y vertical)
+
   const threeX = total_y;
   const threeZ = total_x;
   const threeY = total_z + ALTURA_BASE;
@@ -276,7 +276,7 @@ gui.add(articular.tres, 'longitud').name(articular.tres.nombre).listen();
 
 gui.onChange(() => validarYActualizar());
 
-// Trayectoria con polinomio de 5° orden
+
 const trayectoria = {
   duracion: 3,
   q1_inicial: 0, q1_final: 90,
